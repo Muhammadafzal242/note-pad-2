@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Notepad with Google Login</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: #4285f4;
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h1 i {
+            font-size: 1.5rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 70vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .login-container h2 {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        .login-container p {
+            margin-bottom: 30px;
+            color: #777;
+        }
+        
+        .notes-container {
+            margin-top: 30px;
+        }
+        
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .new-note-btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .new-note-btn:hover {
+            background-color: #3367d6;
+            transform: translateY(-2px);
+        }
+        
+        .notes-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .note-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 200px;
+            overflow: hidden;
+            border-left: 4px solid #4285f4;
+        }
+        
+        .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .note-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #4285f4;
+        }
+        
+        .note-content {
+            flex-grow: 1;
+            overflow: hidden;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .note-date {
+            font-size: 0.8rem;
+            color: #999;
+            margin-top: 10px;
+            text-align: right;
+        }
+        
+        .note-editor {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            border-left: 4px solid #34a853;
+        }
+        
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .editor-title {
+            width: 100%;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: 600;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .editor-title:focus, .editor-content:focus {
+            outline: none;
+            border-bottom: 1px solid #4285f4;
+        }
+        
+        .editor-content {
+            width: 100%;
+            min-height: 300px;
+            border: none;
+            resize: vertical;
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .editor-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+        
+        .save-btn, .delete-btn, .close-editor-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .save-btn {
+            background-color: #34a853;
+            color: white;
+        }
+        
+        .save-btn:hover {
+            background-color: #2d9248;
+        }
+        
+        .delete-btn {
+            background-color: #ea4335;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background-color: #d23a2d;
+        }
+        
+        .close-editor-btn {
+            background-color: #f1f1f1;
+            color: #555;
+        }
+        
+        .close-editor-btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #777;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .success {
+            background-color: #e6f4ea;
+            color: #34a853;
+        }
+        
+        .error {
+            background-color: #fce8e6;
+            color: #ea4335;
+        }
+        
+        .oauth-setup {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .notes-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .editor-actions {
+                flex-direction: column;
+            }
+            
+            .login-card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <h1><i>📝</i> Secure Notepad</h1>
+            <div id="userInfo" class="user-info hidden">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <span id="userName"></span>
+                <button id="logoutBtn" class="logout-btn"><i>🚪</i> Logout</button>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Login Section -->
+        <div id="loginContainer" class="login-container">
+            <div class="login-card">
+                <h2>Welcome to Secure Notepad</h2>
+                <p>Sign in with your Google account to access your notes</p>
+                
+                <!-- OAuth Setup Instructions -->
+                <div class="oauth-setup">
+                    <strong>Setup Required:</strong> To enable Google Login, you need to:
+                    <ol>
+                        <li>Create OAuth credentials in <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a></li>
+                        <li>Add your GitHub Pages URL as authorized origin</li>
+                        <li>Replace "YOUR_GOOGLE_CLIENT_ID" below with your actual Client ID</li>
+                    </ol>
+                    <p>Your GitHub Pages URL: <strong id="pagesUrl">https://yourusername.github.io/repository</strong></p>
+                </div>
+                
+                <div id="g_id_onload"
+                    data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                    data-context="signin"
+                    data-ux_mode="popup"
+                    data-callback="handleGoogleSignIn"
+                    data-auto_prompt="false">
+                </div>
+                
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="rectangular"
+                    data-theme="filled_blue"
+                    data-text="signin_with"
+                    data-size="large"
+                    data-logo_alignment="left"
+                    data-width="300">
+                </div>
+                
+                <div id="loginStatus" class="status-message hidden"></div>
+                
+                <div style="margin-top: 20px; font-size: 0.9rem; color: #888;">
+                    <p><strong>Demo Info:</strong> For testing, you can use the demo login below.</p>
+                    <button onclick="demoLogin()" style="margin-top: 10px; background: #f1f1f1; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">
+                        Use Demo Login Instead
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notes Section (shown after login) -->
+        <div id="notesSection" class="notes-container hidden">
+            <div class="notes-header">
+                <h2>My Notes</h2>
+                <button id="newNoteBtn" class="new-note-btn"><i>+</i> New Note</button>
+            </div>
+            
+            <div id="notesList" class="notes-list">
+                <!-- Notes will be dynamically added here -->
+            </div>
+            
+            <div id="noteEditor" class="note-editor hidden">
+                <div class="editor-header">
+                    <input type="text" id="editorTitle" class="editor-title" placeholder="Note Title">
+                </div>
+                <textarea id="editorContent" class="editor-content" placeholder="Start writing your note here..."></textarea>
+                <div class="editor-actions">
+                    <button id="saveNoteBtn" class="save-btn"><i>💾</i> Save</button>
+                    <button id="deleteNoteBtn" class="delete-btn"><i>🗑️</i> Delete</button>
+                    <button id="closeEditorBtn" class="close-editor-btn"><i>←</i> Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginContainer = document.getElementById('loginContainer');
+        const notesSection = document.getElementById('notesSection');
+        const userInfo = document.getElementById('userInfo');
+        const userAvatar = document.getElementById('userAvatar');
+        const userName = document.getElementById('userName');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const notesList = document.getElementById('notesList');
+        const newNoteBtn = document.getElementById('newNoteBtn');
+        const noteEditor = document.getElementById('noteEditor');
+        const editorTitle = document.getElementById('editorTitle');
+        const editorContent = document.getElementById('editorContent');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+        const closeEditorBtn = document.getElementById('closeEditorBtn');
+        const loginStatus = document.getElementById('loginStatus');
+        const pagesUrl = document.getElementById('pagesUrl');
+        
+        // Set current URL for OAuth setup guidance
+        pagesUrl.textContent = window.location.origin;
+        
+        // State variables
+        let currentUser = null;
+        let notes = [];
+        let currentNoteId = null;
+        let autoSaveTimer = null;
+        
+        // Check if user is already logged in (from localStorage)
+        function checkLoginStatus() {
+            const savedUser = localStorage.getItem('notepadUser');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showNotesSection();
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                    localStorage.removeItem('notepadUser');
+                }
+            }
+        }
+        
+        // Handle Google Sign-In
+        function handleGoogleSignIn(response) {
+            // This function is called by Google's Sign-In API
+            console.log('Google Sign-In response:', response);
+            
+            // The credential is a JWT token that contains user information
+            const credential = response.credential;
+            
+            // Decode the JWT to get user info
+            const payload = JSON.parse(atob(credential.split('.')[1]));
+            
+            const userObject = {
+                id: payload.sub,
+                name: payload.name,
+                email: payload.email,
+                avatar: payload.picture,
+                credential: credential
+            };
+            
+            currentUser = userObject;
+            localStorage.setItem('notepadUser', JSON.stringify(userObject));
+            showNotesSection();
+            
+            // Show success message
+            showLoginStatus(`Welcome, ${userObject.name}!`, 'success');
+        }
+        
+        // Show login status message
+        function showLoginStatus(message, type) {
+            loginStatus.textContent = message;
+            loginStatus.className = `status-message ${type}`;
+            loginStatus.classList.remove('hidden');
+            
+            setTimeout(() => {
+                loginStatus.classList.add('hidden');
+            }, 3000);
+        }
+        
+        // Show notes section after login
+        function showNotesSection() {
+            loginContainer.classList.add('hidden');
+            notesSection.classList.remove('hidden');
+            userInfo.classList.remove('hidden');
+            
+            // Set user info
+            userName.textContent = currentUser.name;
+            userAvatar.src = currentUser.avatar;
+            
+            // Load user's notes
+            loadNotes();
+        }
+        
+        // Load notes from localStorage
+        function loadNotes() {
+            const userNotes = localStorage.getItem(`notes_${currentUser.id}`);
+            notes = userNotes ? JSON.parse(userNotes) : [];
+            renderNotes();
+        }
+        
+        // Render notes to the UI
+        function renderNotes() {
+            notesList.innerHTML = '';
+            
+            if (notes.length === 0) {
+                notesList.innerHTML = `
+                    <div class="empty-state">
+                        <i>📝</i>
+                        <h3>No notes yet</h3>
+                        <p>Create your first note to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort notes by update date (newest first)
+            notes.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            
+            notes.forEach(note => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note-card';
+                noteElement.innerHTML = `
+                    <div class="note-title">${note.title || 'Untitled Note'}</div>
+                    <div class="note-content">${note.content.substring(0, 120)}${note.content.length > 120 ? '...' : ''}</div>
+                    <div class="note-date">Last updated: ${formatDate(note.updatedAt)}</div>
+                `;
+                
+                noteElement.addEventListener('click', () => openNote(note.id));
+                notesList.appendChild(noteElement);
+            });
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+        
+        // Open a note for editing
+        function openNote(noteId) {
+            const note = notes.find(n => n.id === noteId);
+            if (!note) return;
+            
+            currentNoteId = noteId;
+            editorTitle.value = note.title || '';
+            editorContent.value = note.content;
+            
+            noteEditor.classList.remove('hidden');
+            notesList.classList.add('hidden');
+            newNoteBtn.classList.add('hidden');
+            
+            // Start auto-save
+            startAutoSave();
+        }
+        
+        // Create a new note
+        function createNewNote() {
+            currentNoteId = 'note_' + Date.now();
+            editorTitle.value = '';
+            editorContent.value = '';
+            
+            noteEditor.classList.remove('hidden');
+            notesList.classList.add('hidden');
+            newNoteBtn.classList.add('hidden');
+            
+            // Focus on title field
+            editorTitle.focus();
+            
+            // Start auto-save
+            startAutoSave();
+        }
+        
+        // Save the current note
+        function saveNote() {
+            if (!currentNoteId) return;
+            
+            const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+            const noteData = {
+                id: currentNoteId,
+                title: editorTitle.value.trim(),
+                content: editorContent.value,
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (noteIndex === -1) {
+                // New note
+                notes.unshift(noteData);
+            } else {
+                // Update existing note
+                notes[noteIndex] = noteData;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem(`notes_${currentUser.id}`, JSON.stringify(notes));
+            
+            // Show save confirmation
+            const saveBtnText = saveNoteBtn.innerHTML;
+            saveNoteBtn.innerHTML = '<i>✓</i> Saved!';
+            setTimeout(() => {
+                saveNoteBtn.innerHTML = saveBtnText;
+            }, 1500);
+        }
+        
+        // Delete the current note
+        function deleteNote() {
+            if (!currentNoteId) return;
+            
+            if (confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+                notes = notes.filter(n => n.id !== currentNoteId);
+                localStorage.setItem(`notes_${currentUser.id}`, JSON.stringify(notes));
+                
+                closeEditor();
+                renderNotes();
+            }
+        }
+        
+        // Close the editor
+        function closeEditor() {
+            noteEditor.classList.add('hidden');
+            notesList.classList.remove('hidden');
+            newNoteBtn.classList.remove('hidden');
+            currentNoteId = null;
+            
+            // Stop auto-save
+            stopAutoSave();
+        }
+        
+        // Auto-save functionality
+        function startAutoSave() {
+            // Clear any existing timer
+            stopAutoSave();
+            
+            // Save immediately when content changes
+            editorTitle.addEventListener('input', saveNote);
+            editorContent.addEventListener('input', saveNote);
+            
+            // Also auto-save every 5 seconds
+            autoSaveTimer = setInterval(saveNote, 5000);
+        }
+        
+        function stopAutoSave() {
+            if (autoSaveTimer) {
+                clearInterval(autoSaveTimer);
+                autoSaveTimer = null;
+            }
+            
+            editorTitle.removeEventListener('input', saveNote);
+            editorContent.removeEventListener('input', saveNote);
+        }
+        
+        // Logout function
+        function logout() {
+            // Google Sign-Out (if using Google One Tap)
+            if (window.google && currentUser.credential) {
+                google.accounts.id.disableAutoSelect();
+            }
+            
+            currentUser = null;
+            localStorage.removeItem('notepadUser');
+            
+            notesSection.classList.add('hidden');
+            userInfo.classList.add('hidden');
+            loginContainer.classList.remove('hidden');
+            closeEditor();
+        }
+        
+        // Demo login function (for testing without Google OAuth setup)
+        function demoLogin() {
+            const demoUser = {
+                id: 'demo_user_' + Date.now(),
+                name: 'Demo User',
+                email: 'demo@example.com',
+                avatar: 'https://i.pravatar.cc/150?img=68'
+            };
+            
+            currentUser = demoUser;
+            localStorage.setItem('notepadUser', JSON.stringify(demoUser));
+            showNotesSection();
+            
+            showLoginStatus('Demo login successful!', 'success');
+        }
+        
+        // Event Listeners
+        logoutBtn.addEventListener('click', logout);
+        newNoteBtn.addEventListener('click', createNewNote);
+        saveNoteBtn.addEventListener('click', saveNote);
+        deleteNoteBtn.addEventListener('click', deleteNote);
+        closeEditorBtn.addEventListener('click', closeEditor);
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            
+            // If Google Sign-In isn't loaded after a few seconds, show a message
+            setTimeout(() => {
+                if (!document.querySelector('.g_id_signin iframe')) {
+                    showLoginStatus('Google Sign-In is not configured. Using demo mode.', 'error');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
